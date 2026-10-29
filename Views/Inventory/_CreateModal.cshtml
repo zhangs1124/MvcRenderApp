@@ -1,0 +1,58 @@
+﻿@model MvcRenderApp.Models.InventoryItem
+
+<form id="createItemForm" onsubmit="submitCreateItem(event);">
+    @Html.AntiForgeryToken()
+
+    <div class="p-2">
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6">
+                <label class="form-label fw-bold">物料代碼 <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-upc-scan"></i></span>
+                    <input type="text" name="ItemCode" class="form-control text-uppercase" placeholder="例：MED-009" maxlength="20" required autofocus />
+                </div>
+                <small class="text-muted">英數字代碼，系統將自動轉大寫</small>
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label fw-bold">物料分類 <span class="text-danger">*</span></label>
+                <select name="Category" class="form-select" required>
+                    <option value="" disabled selected>請選擇分類...</option>
+                    <option value="醫療耗材">醫療耗材</option>
+                    <option value="防護裝備">防護裝備</option>
+                    <option value="消毒清潔">消毒清潔</option>
+                    <option value="醫藥製劑">醫藥製劑</option>
+                    <option value="行政耗材">行政耗材</option>
+                    <option value="儀器設備">儀器設備</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">品名規格名稱 <span class="text-danger">*</span></label>
+            <input type="text" name="ItemName" class="form-control" placeholder="例：手臂式電子血壓計 (含壓脈帶)" maxlength="100" required />
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-bold">初始存量</label>
+                <input type="number" name="StockQuantity" class="form-control" value="10" min="0" required />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-bold">安全預警水位</label>
+                <input type="number" name="SafetyStock" class="form-control" value="20" min="1" required />
+                <small class="text-muted">低於此值亮黃燈</small>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-bold">計量單位 <span class="text-danger">*</span></label>
+                <input type="text" name="Unit" class="form-control" value="件" maxlength="10" required />
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="submit" class="btn btn-success px-4" id="btnSubmitCreate">
+            <i class="bi bi-plus-circle me-1"></i> 立即新增物料
+        </button>
+    </div>
+</form>

@@ -18,8 +18,11 @@
             </p>
         </div>
         <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success shadow-sm d-flex align-items-center px-3" onclick="openGlobalModal('/Inventory/CreateModal', '新增全新物料品項', 'lg');">
+                <i class="bi bi-plus-lg me-1"></i> 新增物料品項
+            </button>
             <span class="badge bg-white text-dark border p-2 px-3 shadow-sm d-flex align-items-center">
-                <i class="bi bi-box-seam me-2 text-primary"></i> 總品項：<strong class="ms-1 fs-6">@totalCount</strong>
+                <i class="bi bi-box-seam me-2 text-primary"></i> 總品項：<strong class="ms-1 fs-6" id="totalCountBadge">@totalCount</strong>
             </span>
             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle p-2 px-3 shadow-sm d-flex align-items-center">
                 <i class="bi bi-exclamation-triangle me-2 text-warning"></i> 水位警戒：<strong class="ms-1 fs-6">@warningCount</strong>
@@ -73,10 +76,10 @@
                             <th style="width: 220px;" class="text-end pe-4">快速出入庫作業</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="inventoryTableBody">
                         @if (!Model.Any())
                         {
-                            <tr>
+                            <tr id="emptyRow">
                                 <td colspan="7" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
                                     查無符合條件的物料品項
@@ -134,6 +137,113 @@
 
 @section Scripts {
 <script>
+    /**
+     * AJAX 提交新增物料 (SPA-like 無刷新新增)
+     */
+    function submitCreateItem(e) {
+        e.preventDefault();
+        const form = document.getElementById("createItemForm");
+        const submitBtn = document.getElementById("btnSubmitCreate");
+        const formData = new FormData(form);
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> 建立中...';
+
+        fetch("/Inventory/Create", {
+            method: "POST",
+            body: formData,
+            credentials: "same-origin"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // 關閉 Modal
+                const modalEl = document.getElementById("globalModal");
+                const bsModal = bootstrap.Modal.getInstance(modalEl);
+                if (bsModal) bsModal.hide();
+
+                // 移除空資料列
+                const emptyRow = document.getElementById("emptyRow");
+                if (emptyRow) emptyRow.remove();
+
+                // 動態將新物料插入表格最頂端
+                const tbody = document.getElementById("inventoryTableBody");
+                const newTr = document.createElement("tr");
+                newTr.id = `row-item-${data.item.id}`;
+                newTr.className = "table-success-highlight";
+                newTr.innerHTML = `
+                    <td class="ps-4 text-muted fw-semibold">#${data.item.id}</td>
+                    <td>
+                        <div class="fw-bold text-dark fs-6">${data.item.itemName} <span class="badge bg-danger-subtle text-danger ms-1">New</span></div>
+                        <small class="text-muted">代碼：<code>${data.item.itemCode}</code></small>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border">${data.item.category}</span>
+                    </td>
+                    <td>
+                        <div class="fs-6 fw-bold text-dark item-quantity" id="qty-${data.item.id}">
+                            ${data.item.stockQuantity} <span class="fs-6 font-normal text-muted">${data.item.unit}</span>
+                        </div>
+                        <small class="text-muted">安全水位：${data.item.safetyStock} ${data.item.unit}</small>
+                    </td>
+                    <td>
+                        <span class="badge ${data.item.statusBadge} item-badge" id="badge-${data.item.id}">
+                            ${data.item.statusText}
+                        </span>
+                    </td>
+                    <td>
+                        <small class="text-muted item-time" id="time-${data.item.id}">
+                            ${data.item.lastUpdated}
+                        </small>
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-success" onclick="openGlobalModal('/Inventory/AdjustStockModal?id=${data.item.id}&actionType=in', '物料快速入庫作業');">
+                                <i class="bi bi-plus-circle me-1"></i> 入庫
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" onclick="openGlobalModal('/Inventory/AdjustStockModal?id=${data.item.id}&actionType=out', '物料快速出庫作業');">
+                                <i class="bi bi-dash-circle me-1"></i> 出庫
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.insertBefore(newTr, tbody.firstChild);
+
+                // 更新品項數計數器
+                const badge = document.getElementById("totalCountBadge");
+                if (badge) {
+                    badge.textContent = parseInt(badge.textContent || "0") + 1;
+                }
+
+                // 成功提示
+                Swal.fire({
+                    icon: "success",
+                    title: "新增成功！",
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> 立即新增物料';
+                Swal.fire({
+                    icon: "warning",
+                    title: "建立失敗",
+                    text: data.message
+                });
+            }
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> 立即新增物料';
+            Swal.fire({
+                icon: "error",
+                title: "網路異常",
+                text: err.message
+            });
+        });
+    }
+
     /**
      * AJAX 提交庫存異動 (SPA-like 無刷新更新)
      */

@@ -30,11 +30,71 @@ public class InventoryController : Controller
                                      x.Category.ToLower().Contains(keyword));
         }
 
-        var items = await query.OrderBy(x => x.Id).ToListAsync();
+        var items = await query.OrderByDescending(x => x.Id).ToListAsync();
         ViewBag.SearchKeyword = search ?? "";
         ViewBag.TotalCount = items.Count;
         ViewBag.WarningCount = items.Count(x => x.StockQuantity <= x.SafetyStock);
         return View(items);
+    }
+
+    // GET: /Inventory/CreateModal
+    // 回傳新增物料 Partial View 供全域 Modal 載入
+    [HttpGet]
+    public IActionResult CreateModal()
+    {
+        var newItem = new InventoryItem 
+        { 
+            StockQuantity = 10, 
+            SafetyStock = 20, 
+            Unit = "件" 
+        };
+        return PartialView("_CreateModal", newItem);
+    }
+
+    // POST: /Inventory/Create
+    // AJAX 提交新增物料品項
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create([FromForm] InventoryItem item)
+    {
+        if (string.IsNullOrWhiteSpace(item.ItemCode) || string.IsNullOrWhiteSpace(item.ItemName) || string.IsNullOrWhiteSpace(item.Category))
+        {
+            return Json(new { success = false, message = "物料代碼、品名規格與分類皆為必填欄位！" });
+        }
+
+        item.ItemCode = item.ItemCode.Trim().ToUpper();
+        item.ItemName = item.ItemName.Trim();
+        item.Category = item.Category.Trim();
+
+        // 代碼防呆：防止重複建立相同代碼
+        bool exists = await _context.InventoryItems.AnyAsync(x => x.ItemCode == item.ItemCode);
+        if (exists)
+        {
+            return Json(new { success = false, message = $"物料代碼【{item.ItemCode}】已存在，不可重複建立！" });
+        }
+
+        item.LastUpdated = DateTime.UtcNow;
+        _context.InventoryItems.Add(item);
+        await _context.SaveChangesAsync();
+
+        return Json(new
+        {
+            success = true,
+            message = $"新品項【{item.ItemName} ({item.ItemCode})】建立成功！",
+            item = new
+            {
+                id = item.Id,
+                itemCode = item.ItemCode,
+                itemName = item.ItemName,
+                category = item.Category,
+                stockQuantity = item.StockQuantity,
+                safetyStock = item.SafetyStock,
+                unit = item.Unit,
+                statusBadge = item.StatusBadgeClass,
+                statusText = item.StatusText,
+                lastUpdated = item.LastUpdated.ToString("yyyy-MM-dd HH:mm")
+            }
+        });
     }
 
     // GET: /Inventory/AdjustStockModal?id=1&actionType=in
