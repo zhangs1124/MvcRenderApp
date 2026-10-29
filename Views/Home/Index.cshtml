@@ -1,0 +1,163 @@
+﻿@inject IWebHostEnvironment Env
+@{
+    ViewData["Title"] = "系統儀表板";
+}
+
+<div class="container-fluid px-0">
+    <!-- 歡迎橫幅 -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(135deg, #1e3d5c 0%, #2b5177 100%); color: #fff;">
+        <div class="card-body p-4 p-lg-5">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <span class="badge bg-info text-dark px-3 py-2 mb-3 fw-bold rounded-pill">
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i> ASP.NET Core 8.0 + Render 雙環境架構
+                    </span>
+                    <h2 class="fw-bold mb-2 text-white">歡迎使用 庫存雲端管家 (Inventory Flow)</h2>
+                    <p class="text-white-50 mb-0 fs-6">
+                        本專案已成功完成基底架構建置！遵循單一頁面體驗（SPA-like）、Modal-First CRUD 與 RWD 響應式規範，支援 Render Docker 多階段容器化發布。
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                    <a href="/healthz" target="_blank" class="btn btn-light px-4 py-2 fw-bold text-primary shadow-sm me-2">
+                        <i class="bi bi-heart-pulse-fill me-1 text-danger"></i> 檢視健康探針
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4 大核心 KPI 指標卡 -->
+    <div class="row g-4 mb-4">
+        <!-- 指標 1 -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold mb-1">庫存管理品項數</div>
+                    <h3 class="fw-bold mb-0 text-dark">128 <small class="fs-6 text-muted font-normal">品項</small></h3>
+                    <small class="text-success"><i class="bi bi-arrow-up-right me-1"></i>常態供應中</small>
+                </div>
+                <div class="kpi-icon-box bg-primary-subtle text-primary">
+                    <i class="bi bi-boxes"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 指標 2 -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold mb-1">低水位庫存警戒</div>
+                    <h3 class="fw-bold mb-0 text-warning">3 <small class="fs-6 text-muted font-normal">品項</small></h3>
+                    <small class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>待補充進貨</small>
+                </div>
+                <div class="kpi-icon-box bg-warning-subtle text-warning">
+                    <i class="bi bi-bell-fill"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 指標 3 -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold mb-1">今日出入庫異動</div>
+                    <h3 class="fw-bold mb-0 text-dark">24 <small class="fs-6 text-muted font-normal">筆</small></h3>
+                    <small class="text-muted"><i class="bi bi-clock-history me-1"></i>系統自動記帳</small>
+                </div>
+                <div class="kpi-icon-box bg-info-subtle text-info">
+                    <i class="bi bi-arrow-left-right"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 指標 4 -->
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold mb-1">雲端伺服器狀態</div>
+                    <h3 class="fw-bold mb-0 text-success">Healthy</h3>
+                    <small class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Render 容器活躍</small>
+                </div>
+                <div class="kpi-icon-box bg-success-subtle text-success">
+                    <i class="bi bi-cpu-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 架構與演練指引雙卡片 -->
+    <div class="row g-4">
+        <!-- 左側：Render 雙環境運作說明 -->
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-diagram-3-fill me-2 text-primary"></i> 雙環境架構配置總覽
+                    </h5>
+                    <span class="badge bg-secondary">Infrastructure</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>部署環境</th>
+                                    <th>Git 分支</th>
+                                    <th>Render 觸發機制</th>
+                                    <th>用途目標</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-warning text-dark"><i class="bi bi-lightning-charge-fill me-1"></i>PR Preview</span></td>
+                                    <td><code>feature/*</code></td>
+                                    <td>提出 PR 時自動產生臨時網址</td>
+                                    <td>主管/QA 獨立驗收，Merge 後銷毀</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info text-dark"><i class="bi bi-tools me-1"></i>Staging</span></td>
+                                    <td><code>develop</code></td>
+                                    <td>分支 Push 自動 Continuous Deploy</td>
+                                    <td>內部整合測試、跨模組演練</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Production</span></td>
+                                    <td><code>main</code></td>
+                                    <td>PR 審核核准 Merge 自動發布</td>
+                                    <td>正式對外營運環境</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：Issue ➔ PR 演練預備指引 -->
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-primary">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-git me-2 text-primary"></i> 下一階段任務指引
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-secondary small mb-3">
+                        目前已完成「步驟一：基底版面與環境就緒」。接下來我們將推進：
+                    </p>
+                    <ol class="list-group list-group-numbered border-0 small">
+                        <li class="list-group-item border-0 px-0 pb-2">
+                            <strong>配置多階段 Dockerfile 與 render.yaml</strong>：兼顧極速建置與微型映像檔體積。
+                        </li>
+                        <li class="list-group-item border-0 px-0 pb-2">
+                            <strong>配置 GitHub 治理規範</strong>：建立 PR 模板（自動帶入 <code>Closes #ID</code>）與 CODEOWNERS。
+                        </li>
+                        <li class="list-group-item border-0 px-0 pb-0">
+                            <strong>演練第一個 Issue ➔ PR 實戰</strong>：在 GitHub 建立第一個 Issue，分支實作「物料庫存 Modal CRUD」！
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

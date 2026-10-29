@@ -1,0 +1,50 @@
+﻿@inject IWebHostEnvironment Env
+@* 遵循 @mvc-sidebar-layout 規範：頂部功能導覽列 *@
+<header class="custom-header d-flex justify-content-between align-items-center px-4">
+    <div class="d-flex align-items-center">
+        <button type="button" id="sidebarCollapse" class="btn btn-outline-secondary btn-sm me-3" title="收合/展開側邊欄">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">首頁</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@ViewData["Title"]</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <!-- 雲端雙環境識別徽章 -->
+        @{
+            string envName = Env.EnvironmentName;
+            string badgeClass = envName.ToLower() switch
+            {
+                "production" => "bg-success",
+                "staging" => "bg-warning text-dark",
+                _ => "bg-primary"
+            };
+        }
+        <span class="badge @badgeClass py-2 px-3 shadow-sm">
+            <i class="bi bi-cloud-check-fill me-1"></i> 環境：@envName
+        </span>
+
+        <!-- 系統狀態燈號 -->
+        <span class="badge bg-light text-dark border py-2 px-3">
+            <span class="status-dot bg-success me-1"></span> Render 容器就緒
+        </span>
+
+        <!-- 使用者快捷選單 -->
+        <div class="dropdown">
+            <button class="btn btn-light dropdown-toggle btn-sm shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-fill me-1"></i> 管理員
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li><h6 class="dropdown-header">使用者治理</h6></li>
+                <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>個人設定</a></li>
+                <li><a class="dropdown-item" href="/healthz" target="_blank"><i class="bi bi-activity me-2"></i>健康檢查</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="javascript:void(0);" onclick="Swal.fire('登出', '演練環境無需登出', 'info');"><i class="bi bi-box-arrow-right me-2"></i>登出系統</a></li>
+            </ul>
+        </div>
+    </div>
+</header>

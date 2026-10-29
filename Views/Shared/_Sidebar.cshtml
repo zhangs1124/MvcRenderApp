@@ -1,0 +1,57 @@
+﻿@* 遵循 @mvc-sidebar-layout 規範：左側導覽列 *@
+<nav id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <div class="brand-logo">
+            <i class="bi bi-box-seam-fill me-2 brand-icon"></i>
+            <span class="brand-text">庫存雲端管家</span>
+        </div>
+        <small class="text-white-50 d-block mt-1 ps-1">Cloud Inventory Manager</small>
+    </div>
+
+    <ul class="list-unstyled components">
+        <li class="active">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="bi bi-speedometer2 me-2"></i> 系統儀表板
+            </a>
+        </li>
+        <li>
+            <a href="javascript:void(0);" onclick="Swal.fire({icon: 'info', title: '演練預備', text: '物料庫存管理功能將於步驟三（第一個 Issue ➔ PR 實戰演練）由分支進行開發！'});">
+                <i class="bi bi-boxes me-2"></i> 物料庫存管理
+                <span class="badge bg-warning text-dark ms-auto">PR #1 預備</span>
+            </a>
+        </li>
+        <li>
+            <a href="javascript:void(0);" onclick="Swal.fire({icon: 'info', title: '演練預備', text: '出入庫異動履歷模組將在後續版本迭代中加入。'});">
+                <i class="bi bi-clock-history me-2"></i> 出入庫履歷
+            </a>
+        </li>
+        <li class="sidebar-divider my-2"></li>
+        <li>
+            <a href="/healthz" target="_blank">
+                <i class="bi bi-heart-pulse me-2"></i> 容器健康端點
+                <span class="badge bg-success ms-auto">200 OK</span>
+            </a>
+        </li>
+        <li>
+            <a asp-controller="Home" asp-action="Privacy">
+                <i class="bi bi-shield-check me-2"></i> 隱私與資安政策
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <div class="user-info d-flex align-items-center">
+            <div class="avatar me-2">
+                <i class="bi bi-person-circle fs-4 text-info"></i>
+            </div>
+            <div class="user-details lh-1">
+                <div class="fw-bold text-white fs-6">系統管理者</div>
+                <small class="text-white-50">Admin Role</small>
+            </div>
+        </div>
+        <div class="system-meta mt-2 pt-2 border-top border-secondary text-white-50 small">
+            <div>架構：ASP.NET Core 8.0</div>
+            <div>雙環境版次：v1.0.0-baseline</div>
+        </div>
+    </div>
+</nav>
