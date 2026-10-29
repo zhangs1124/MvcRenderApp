@@ -1,0 +1,34 @@
+﻿services:
+  # --------------------------------------------------------------------------
+  # 1. 正式環境 Web 服務 (Production)
+  # --------------------------------------------------------------------------
+  - type: web
+    name: inventory-flow-prod
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=data/inventory.db
+
+  # --------------------------------------------------------------------------
+  # 2. 測試環境 Web 服務 (Staging)
+  # --------------------------------------------------------------------------
+  - type: web
+    name: inventory-flow-staging
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: develop
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Staging
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=data/inventory.db

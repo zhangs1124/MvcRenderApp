@@ -1,6 +1,11 @@
 ﻿@inject IWebHostEnvironment Env
+@using MvcRenderApp.Models
 @{
     ViewData["Title"] = "系統儀表板";
+    int totalItems = ViewBag.TotalItems ?? 0;
+    int warningItems = ViewBag.WarningItems ?? 0;
+    int outOfStock = ViewBag.OutOfStockItems ?? 0;
+    var recentItems = ViewBag.RecentItems as List<InventoryItem> ?? new List<InventoryItem>();
 }
 
 <div class="container-fluid px-0">
@@ -10,31 +15,31 @@
             <div class="row align-items-center">
                 <div class="col-lg-8">
                     <span class="badge bg-info text-dark px-3 py-2 mb-3 fw-bold rounded-pill">
-                        <i class="bi bi-rocket-takeoff-fill me-1"></i> ASP.NET Core 8.0 + Render 雙環境架構
+                        <i class="bi bi-rocket-takeoff-fill me-1"></i> ASP.NET Core 8.0 + SQLite + Render 雙環境
                     </span>
                     <h2 class="fw-bold mb-2 text-white">歡迎使用 庫存雲端管家 (Inventory Flow)</h2>
                     <p class="text-white-50 mb-0 fs-6">
-                        本專案已成功完成基底架構建置！遵循單一頁面體驗（SPA-like）、Modal-First CRUD 與 RWD 響應式規範，支援 Render Docker 多階段容器化發布。
+                        本專案已完成基底版面、SQLite 資料庫與 Render 雙環境配置！所有操作流程已整合於 <code>doc/TUTORIAL_GUIDE.md</code>。
                     </p>
                 </div>
                 <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
                     <a href="/healthz" target="_blank" class="btn btn-light px-4 py-2 fw-bold text-primary shadow-sm me-2">
-                        <i class="bi bi-heart-pulse-fill me-1 text-danger"></i> 檢視健康探針
+                        <i class="bi bi-heart-pulse-fill me-1 text-danger"></i> 健康探針
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 4 大核心 KPI 指標卡 -->
+    <!-- 4 大核心 KPI 指標卡 (連接 SQLite 真實數據) -->
     <div class="row g-4 mb-4">
         <!-- 指標 1 -->
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
                 <div>
                     <div class="text-muted small fw-semibold mb-1">庫存管理品項數</div>
-                    <h3 class="fw-bold mb-0 text-dark">128 <small class="fs-6 text-muted font-normal">品項</small></h3>
-                    <small class="text-success"><i class="bi bi-arrow-up-right me-1"></i>常態供應中</small>
+                    <h3 class="fw-bold mb-0 text-dark">@totalItems <small class="fs-6 text-muted font-normal">品項</small></h3>
+                    <small class="text-success"><i class="bi bi-database-check me-1"></i>SQLite 資料庫就緒</small>
                 </div>
                 <div class="kpi-icon-box bg-primary-subtle text-primary">
                     <i class="bi bi-boxes"></i>
@@ -47,8 +52,8 @@
             <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
                 <div>
                     <div class="text-muted small fw-semibold mb-1">低水位庫存警戒</div>
-                    <h3 class="fw-bold mb-0 text-warning">3 <small class="fs-6 text-muted font-normal">品項</small></h3>
-                    <small class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>待補充進貨</small>
+                    <h3 class="fw-bold mb-0 text-warning">@warningItems <small class="fs-6 text-muted font-normal">品項</small></h3>
+                    <small class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle-fill me-1"></i>含 @outOfStock 項斷貨</small>
                 </div>
                 <div class="kpi-icon-box bg-warning-subtle text-warning">
                     <i class="bi bi-bell-fill"></i>
@@ -60,9 +65,9 @@
         <div class="col-12 col-sm-6 col-xl-3">
             <div class="kpi-card p-4 h-100 d-flex align-items-center justify-content-between">
                 <div>
-                    <div class="text-muted small fw-semibold mb-1">今日出入庫異動</div>
-                    <h3 class="fw-bold mb-0 text-dark">24 <small class="fs-6 text-muted font-normal">筆</small></h3>
-                    <small class="text-muted"><i class="bi bi-clock-history me-1"></i>系統自動記帳</small>
+                    <div class="text-muted small fw-semibold mb-1">今日異動記帳</div>
+                    <h3 class="fw-bold mb-0 text-dark">即時 <small class="fs-6 text-muted font-normal">連線</small></h3>
+                    <small class="text-muted"><i class="bi bi-lightning-charge me-1"></i>EF Core 自動管理</small>
                 </div>
                 <div class="kpi-icon-box bg-info-subtle text-info">
                     <i class="bi bi-arrow-left-right"></i>
@@ -85,47 +90,46 @@
         </div>
     </div>
 
-    <!-- 架構與演練指引雙卡片 -->
+    <!-- 最近異動摘要與架構對照 -->
     <div class="row g-4">
-        <!-- 左側：Render 雙環境運作說明 -->
+        <!-- 左側：即時種子資料預覽 (防擠壓表格展示) -->
         <div class="col-12 col-lg-7">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0 text-dark">
-                        <i class="bi bi-diagram-3-fill me-2 text-primary"></i> 雙環境架構配置總覽
+                        <i class="bi bi-box-seam me-2 text-primary"></i> 庫存種子資料清單 (SQLite)
                     </h5>
-                    <span class="badge bg-secondary">Infrastructure</span>
+                    <span class="badge bg-primary-subtle text-primary">即時連線</span>
                 </div>
                 <div class="card-body p-4">
-                    <div class="table-responsive">
+                    <div class="responsive-table-wrapper">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>部署環境</th>
-                                    <th>Git 分支</th>
-                                    <th>Render 觸發機制</th>
-                                    <th>用途目標</th>
+                                    <th>物料代碼 / 品名</th>
+                                    <th>分類</th>
+                                    <th>現有存量 / 水位</th>
+                                    <th>狀態</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><span class="badge bg-warning text-dark"><i class="bi bi-lightning-charge-fill me-1"></i>PR Preview</span></td>
-                                    <td><code>feature/*</code></td>
-                                    <td>提出 PR 時自動產生臨時網址</td>
-                                    <td>主管/QA 獨立驗收，Merge 後銷毀</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-info text-dark"><i class="bi bi-tools me-1"></i>Staging</span></td>
-                                    <td><code>develop</code></td>
-                                    <td>分支 Push 自動 Continuous Deploy</td>
-                                    <td>內部整合測試、跨模組演練</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Production</span></td>
-                                    <td><code>main</code></td>
-                                    <td>PR 審核核准 Merge 自動發布</td>
-                                    <td>正式對外營運環境</td>
-                                </tr>
+                                @foreach (var item in recentItems)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@item.ItemName</div>
+                                            <small class="text-muted"><code>@item.ItemCode</code></small>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border">@item.Category</span></td>
+                                        <td>
+                                            <span class="fw-bold">@item.StockQuantity @item.Unit</span>
+                                            <small class="text-muted ps-1">(安全: @item.SafetyStock)</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge @item.StatusBadgeClass">@item.StatusText</span>
+                                        </td>
+                                    </tr>
+                                }
                             </tbody>
                         </table>
                     </div>
@@ -133,29 +137,29 @@
             </div>
         </div>
 
-        <!-- 右側：Issue ➔ PR 演練預備指引 -->
+        <!-- 右側：TUTORIAL_GUIDE 指引卡片 -->
         <div class="col-12 col-lg-5">
             <div class="card border-0 shadow-sm rounded-4 h-100 border-start border-4 border-primary">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
                     <h5 class="fw-bold mb-0 text-dark">
-                        <i class="bi bi-git me-2 text-primary"></i> 下一階段任務指引
+                        <i class="bi bi-journal-bookmark-fill me-2 text-primary"></i> 完整教學手冊已就緒
                     </h5>
                 </div>
                 <div class="card-body p-4">
                     <p class="text-secondary small mb-3">
-                        目前已完成「步驟一：基底版面與環境就緒」。接下來我們將推進：
+                        所有 Render 串接、雙環境配置與第一個 PR 演練流程已完整寫入教學檔：
                     </p>
-                    <ol class="list-group list-group-numbered border-0 small">
-                        <li class="list-group-item border-0 px-0 pb-2">
-                            <strong>配置多階段 Dockerfile 與 render.yaml</strong>：兼顧極速建置與微型映像檔體積。
-                        </li>
-                        <li class="list-group-item border-0 px-0 pb-2">
-                            <strong>配置 GitHub 治理規範</strong>：建立 PR 模板（自動帶入 <code>Closes #ID</code>）與 CODEOWNERS。
-                        </li>
-                        <li class="list-group-item border-0 px-0 pb-0">
-                            <strong>演練第一個 Issue ➔ PR 實戰</strong>：在 GitHub 建立第一個 Issue，分支實作「物料庫存 Modal CRUD」！
-                        </li>
-                    </ol>
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="fw-bold text-primary mb-1">
+                            <i class="bi bi-file-earmark-text-fill me-1"></i> doc/TUTORIAL_GUIDE.md
+                        </div>
+                        <small class="text-muted">包含：GitHub 遠端推送、Render Blueprint 一鍵發布、Branch Rulesets 防護、Issue ➔ PR 自動閉環實戰。</small>
+                    </div>
+                    <div class="d-grid">
+                        <a href="javascript:void(0);" onclick="Swal.fire({icon: 'success', title: '教學手冊', text: '請在專案目錄下點擊開啟 doc/TUTORIAL_GUIDE.md 查閱完整 SOP！'});" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-info-circle me-1"></i> 查看教學檔導覽說明
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

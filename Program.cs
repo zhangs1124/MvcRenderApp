@@ -1,11 +1,26 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using Microsoft.EntityFrameworkCore;
+using MvcRenderApp.Data;
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
+
+// 加入 SQLite 資料庫服務
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=inventory.db";
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+// 加入 MVC 服務
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 自動確保 SQLite 資料庫建立並填入種子資料
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
+
+// HTTP 請求管線配置
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

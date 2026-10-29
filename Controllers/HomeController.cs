@@ -1,20 +1,27 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MvcRenderApp.Data;
 using MvcRenderApp.Models;
 
 namespace MvcRenderApp.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly ILogger<HomeController> _logger;
+    private readonly AppDbContext _context;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(AppDbContext context)
     {
-        _logger = logger;
+        _context = context;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        var items = await _context.InventoryItems.ToListAsync();
+        ViewBag.TotalItems = items.Count;
+        ViewBag.WarningItems = items.Count(x => x.StockQuantity <= x.SafetyStock);
+        ViewBag.OutOfStockItems = items.Count(x => x.StockQuantity <= 0);
+        ViewBag.RecentItems = items.OrderByDescending(x => x.LastUpdated).Take(5).ToList();
         return View();
     }
 
