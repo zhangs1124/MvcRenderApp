@@ -9,7 +9,7 @@
 2. [本地端開發與驗證指南](#2-本地端開發與驗證指南)
 3. [Render 雲端 Docker 雙環境自動發布 (Blueprint)](#3-render-雲端-docker-雙環境自動發布-blueprint)
 4. [GitHub 團隊協作與權限治理防護 (CODEOWNERS & Rulesets)](#4-github-團隊協作與權限治理防護-codeowners--rulesets)
-5. [第一個功能實戰：Issue ➔ PR 閉環與行號審查演練 SOP](#5-第一個功能實戰issue--pr-閉環與行號審查演練-sop)
+5. [實戰經典：Issue ➔ 測試機 PR ➔ 正式機 Release 閉環全流程](#5-實戰經典issue--測試機-pr--正式機-release-閉環全流程)
 6. [常見維運問題與排查清單 (Troubleshooting)](#6-常見維運問題與排查清單-troubleshooting)
 
 ---
@@ -38,6 +38,7 @@ dotnet run --launch-profile http
 
 ### 2.2 本地存取端點
 - 系統首頁儀表板：`http://localhost:5051/`
+- 物料庫存管理：`http://localhost:5051/Inventory`
 - 健康檢查探針端點：`http://localhost:5051/healthz`
 
 ---
@@ -48,118 +49,80 @@ dotnet run --launch-profile http
 
 | 環境名稱 | 對應 Git 分支 | Render 服務名稱 | 觸發時機 |
 | :--- | :--- | :--- | :--- |
-| **正式機 (Production)** | `main` | `inventory-flow-prod` | 主管核准 PR 並 Merge 後自動發布 |
-| **測試機 (Staging)** | `develop` | `inventory-flow-staging` | 內部開發分支 Push 自動發布 |
-| **PR 預覽環境 (Previews)** | `feature/*` | `inventory-flow-pr-<編號>` | 提出 PR 時自動生成臨時網址，Merge 後自動銷毀 |
+| **正式機 (Production)** | `main` | `inventory-flow-prod` | `main` 分支更新時 Auto-Deploy |
+| **測試機 (Staging)** | `develop` | `inventory-flow-staging` | `develop` 分支更新時 Auto-Deploy |
 
 ### 3.1 首次推送到 GitHub
-請在 GitHub 上建立一個新的公開或私有儲存庫（如 `MvcRenderApp`），並於本機執行：
 ```bash
-# 綁定 GitHub 遠端倉庫 (請將 <YOUR-GITHUB-URL> 替換為您的倉庫網址)
-git remote add origin <YOUR-GITHUB-URL>
-
-# 推送 main 分支至 GitHub
+# 綁定 GitHub 遠端倉庫
+git remote add origin https://github.com/zhangs1124/MvcRenderApp.git
 git push -u origin main
-
-# 建立並推送 develop 測試分支
 git checkout -b develop
 git push -u origin develop
-git checkout main
 ```
 
 ### 3.2 在 Render 上一鍵套用 Blueprint
 1. 登入 [Render 控制台](https://dashboard.render.com/)。
 2. 點擊右上角 **New +** ➔ 選擇 **Blueprint**。
-3. 連結您的 GitHub 帳號並選取本專案倉庫。
-4. Render 會自動讀取專案根目錄下的 `render.yaml`，並自動為您建立 `inventory-flow-prod` 與 `inventory-flow-staging` 兩個服務。
-5. 點擊 **Apply**，Render 將開始執行遠端 Docker 多階段構建並發布上線！
+3. 選取 `MvcRenderApp` 倉庫 ➔ 點擊 **Connect**。
+4. Render 自動讀取 `render.yaml`，一次辨識出 `inventory-flow-prod` 與 `inventory-flow-staging` 兩台機器。
+5. 填寫 Blueprint Name（如 `mvcrenderapp`）➔ 點擊 **Deploy Blueprint**，雲端立即並行建置兩台獨立容器！
 
 ---
 
 ## 4. GitHub 團隊協作與權限治理防護 (CODEOWNERS & Rulesets)
 
-為了防止開發人員繞過審查直接將代碼推送到 `main`，必須在 GitHub 上配置權限門禁：
-
-### 4.1 配置 Branch Rulesets（保護 main 與 develop）
-1. 進入 GitHub 倉庫 ➔ **Settings** ➔ **Rules** ➔ **Rulesets** ➔ 點擊 **New ruleset**。
-2. Ruleset Name 填寫：`Production Protection`。
-3. Enforcement 選擇 **Active**。
-4. Target branches 點擊 **Add target** ➔ **Include default branch (main)**。
-5. 勾選關鍵規則：
-   - ✅ **Require a pull request before merging**：
-     - 勾選 **Require approvals**：設定至少 `1` 位審查者核准。
-     - 勾選 **Dismiss stale pull request approvals when new commits are pushed**（有新 Commit 時需重新審查）。
-     - 勾選 **Require review from Code Owners**（強制需由 CODEOWNERS 名單內的主管 Approve）。
-   - ✅ **Require status checks to pass**：
-     - 搜尋並勾選我們的 CI 工作流 `build`（確保 `dotnet build` 通過才放行）。
-   - ✅ **Block force pushes**（禁止強推覆蓋歷史）。
-6. 點擊 **Save changes**。
-
-### 4.2 CODEOWNERS 審查機制
-專案已內建 [`.github/CODEOWNERS`](../.github/CODEOWNERS)：
-```text
-* @zhangs1124
-```
-當任何 PR 發起時，GitHub 會自動指派 `@zhangs1124` 為 Mandatory Reviewer，作者本人**絕對無法自己審核自己**。
+* **`.github/pull_request_template.md`**：內建 `Closes #ID` 自動結案關鍵字與 RWD / UTF-8 自檢清單。
+* **`.github/CODEOWNERS`**：指定審核主管 `@zhangs1124`。
+* **`.github/workflows/ci.yml`**：每次 Push 或 PR 時，GitHub Actions 自動在 12 秒內執行 `dotnet build` 確保品質。
 
 ---
 
-## 5. 第個功能實戰：Issue ➔ PR 閉環與行號審查演練 SOP
+## 5. 實戰經典：Issue ➔ 測試機 PR ➔ 正式機 Release 閉環全流程
 
-以下為標準的敏捷開發閉環作業流程：
+以下為今天實戰演練的標準生命週期：
 
-### 步驟 A：主管開立 Issue 工單 (What & Why)
-1. 前往 GitHub 倉庫 ➔ **Issues** ➔ **New issue** ➔ 選擇 **🚀 功能需求工單 (Feature Request)**。
-2. 標題填入：`[Feature] 實作物料清單查詢與 Modal 快速入庫/出庫`。
-3. 內容填入驗收規格（例如：在側邊欄啟用物料清單、點擊按鈕彈出 Modal 異動庫存、儲存後無刷新更新）。
-4. 點擊 **Submit new issue**，取得工單編號（例如 `#1`）。
+### 階段一：主管開立需求工單 (What & Why)
+1. 進入 GitHub ➔ **Issues** ➔ **New issue** ➔ 選擇「🚀 功能需求工單」。
+2. 填寫標題 `[Feature] 實作物料清單查詢與 Modal 快速入庫/出庫` 與驗收標準，點擊 **Create** 產出 **`Issue #1`**。
+3. ★ **核心觀念**：Issue 屬於整個專案大樓，不需要也不綁定特定分支。
 
-### 步驟 B：工程師開分支並開發 (How)
-```bash
-# 從最新 main 切出功能分支
-git checkout main
-git pull
-git checkout -b feature/inventory-modal-crud
+### 階段二：工程師分支開發 (How)
+1. 從測試分支切出小工班分支：`git checkout -b feature/issue-1-inventory-crud`。
+2. 實作 Controller、Views、Partial View Modal 與 RWD 表格。
+3. 編譯通過後推送：`git push -u origin feature/issue-1-inventory-crud`。
 
-# 開始撰寫程式碼 (Modal CRUD、Partial View、AJAX 提交)...
+### 階段三：工程師遞交 PR #2 (進測試機 Staging)
+1. 在 GitHub 建立 PR：
+   - **`base: develop`**（目的地：測試機）
+   - **`compare: feature/issue-1-inventory-crud`**（來源：功能分支）
+   - 內容填寫：`Closes #1`。
+2. 點擊 **Create pull request** 送出！
+3. GitHub Actions 機器人 12 秒自動通過 CI（綠勾 ✅）。
 
-# 提交變更並推送至分支
-git add .
-git commit -m "feat: 實作物料庫存清單與 Modal 快速入庫/出庫"
-git push -u origin feature/inventory-modal-crud
-```
+### 階段四：主管審查與測試機驗收
+1. 主管點進 **Files changed** 進行行號審查，並在下方發表主管留言評語（如：*「經主管審查，出入庫邏輯防呆清晰，予以核准！」*）。
+2. 主管點擊 **Merge pull request** ➔ **Confirm merge**。
+3. **成果**：代碼進入 `develop`，Render 測試機 (`inventory-flow-staging`) 自動部署上線，此時正式機毫髮無傷（雙環境隔離）！
 
-### 步驟 C：提出 PR (Pull Request) 並連動 Issue
-1. 在 GitHub 頁面點擊 **Compare & pull request**。
-2. 系統會自動帶入專案預設的 [`.github/pull_request_template.md`](../.github/pull_request_template.md)。
-3. 在第一行填入：`Closes #1`（**關鍵：此標籤會讓主管 Merge 時自動關閉 Issue #1**）。
-4. 勾選自我檢查清單，並點擊 **Create pull request**。
-
-### 步驟 D：觸發 CI 與 Render 預覽環境 (PR Previews)
-- GitHub Actions 自動執行 CI，確認程式碼編譯無誤（綠色打勾）。
-- Render 自動針對該 PR 啟動臨時容器並提供預覽網址（例如：`https://inventory-flow-pr-1.onrender.com`）。
-
-### 步驟 E：主管審查 (Code Review) 與行號留言
-1. 主管點擊 PR 的 **Files changed** 標籤頁。
-2. 針對有疑問或讚賞的具體程式碼行號，點擊 **`+`** 號發起行號留言（Inline Comment）。
-3. 雙方針對行號討論，修正後點擊 **Resolve conversation**。
-4. 主管在右上角點擊 **Review changes** ➔ 選擇 **Approve**。
-
-### 步驟 F：Merge 放行與自動結案 (Audit Trail)
-1. 主管點擊 **Merge pull request** ➔ **Confirm merge**。
-2. GitHub 自動將代碼合入 `main`。
-3. **Issue #1 自動轉為 Closed (已完成)**。
-4. Render 自動觸發 Production 正式機部署，並自動銷毀剛才的臨時 PR 預覽機器。
+### 階段五：正式機發布 Release PR #3 (推向 Production)
+1. 測試機滿意後，主管建立發布 PR：
+   - **`base: main`**（目的地：正式機）
+   - **`compare: develop`**（來源：測試機）
+   - 內容填寫：`Closes #1`。
+2. 主管點擊 **Merge pull request** ➔ **Confirm merge**。
+3. **終極連鎖反應**：
+   - **Issue #1 在這一刻正式由 GitHub 蓋章 Closed 自動結案！**
+   - **Render 正式機 (`inventory-flow-prod`) 觸發 Auto-Deploy 自動部署！**
+   - 正式機黃色「演練預備」消失，物料管理功能正式在正式機全面營運！
 
 ---
 
 ## 6. 常見維運問題與排查清單 (Troubleshooting)
 
-1. **Render 部署後出現 502 Bad Gateway？**
-   - **原因**：容器未正確綁定 Render 動態指派的 `$PORT`。
-   - **解法**：確認 `Dockerfile` 的啟動指令包含 `--urls http://0.0.0.0:${PORT:-8080}`（本專案已內建）。
-2. **健康探針逾時？**
-   - **原因**：`/healthz` 路由未被正常註冊或資料庫連線卡住。
-   - **解法**：確認 `Program.cs` 中的 `app.MapGet("/healthz", ...)` 存在，本專案健康探針不依賴外部連線，保證極速響應。
-3. **Render 免費版資料庫重啟重設？**
-   - **說明**：Render 免費容器屬於 Ephemeral（無狀態）。重啟時會自動重新執行 `EnsureCreated()` 載入 6 筆標準種子資料，這對「驗收演練與 CI 測試」反而是極大優點，永遠乾淨不髒。若日後需要永久留存，可在 Render 上掛載 Persistent Disk 或連線外部 PostgreSQL。
+1. **為什麼 Issue #1 在合併進 develop 時沒結案？**
+   - GitHub 官方規則：`Closes #ID` 只有在代碼合併進**預設分支 (`main`)** 時才會自動關閉工單。合入 `develop` 代表仍在測試階段，因此保持 Open，直到 Release 合入 `main` 才正式結案。
+2. **Render 免費版冷啟動延遲？**
+   - 免費實例若閒置 15 分鐘會自動休眠，首次喚醒約需 50 秒。重新整理即可正常使用。
+3. **如何確保中文字不亂碼？**
+   - 專案檔案強制使用 UTF-8 (含 BOM) 編碼，可執行 `@fix-file-encoding-bom` 批次轉換。
