@@ -1,0 +1,64 @@
+﻿@model MvcRenderApp.Models.InventoryItem
+@{
+    string actionType = ViewBag.ActionType ?? "in";
+    bool isOut = actionType == "out";
+    string title = isOut ? "物料出庫作業" : "物料入庫作業";
+    string btnClass = isOut ? "btn-danger" : "btn-success";
+    string icon = isOut ? "bi-box-arrow-up" : "bi-box-arrow-in-down";
+}
+
+<form id="adjustStockForm" onsubmit="submitStockAdjustment(event);">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.Id" />
+    <input type="hidden" name="actionType" value="@actionType" />
+
+    <div class="p-2">
+        <div class="alert alert-light border d-flex align-items-center mb-3">
+            <i class="bi @icon fs-2 me-3 @(isOut ? "text-danger" : "text-success")"></i>
+            <div>
+                <div class="fw-bold fs-6">@Model.ItemName</div>
+                <small class="text-muted">代碼：<code>@Model.ItemCode</code> ｜ 分類：@Model.Category</small>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <div class="card bg-light border-0 p-3 text-center">
+                    <small class="text-muted">現有存量</small>
+                    <div class="fs-4 fw-bold text-dark mt-1">@Model.StockQuantity <small class="fs-6 font-normal">@Model.Unit</small></div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card bg-light border-0 p-3 text-center">
+                    <small class="text-muted">安全水位</small>
+                    <div class="fs-4 fw-bold text-secondary mt-1">@Model.SafetyStock <small class="fs-6 font-normal">@Model.Unit</small></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">
+                @(isOut ? "本次出庫數量" : "本次入庫數量") <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+                <input type="number" name="quantity" id="adjustQuantity" class="form-control form-control-lg" min="1" max="@(isOut ? Model.StockQuantity.ToString() : "99999")" required placeholder="請輸入數量" autofocus />
+                <span class="input-group-text">@Model.Unit</span>
+            </div>
+            <small class="text-muted mt-1 d-block">
+                @(isOut ? $"※ 出庫最大上限為目前存量 {Model.StockQuantity} {Model.Unit}" : "※ 支援正整數進貨入庫")
+            </small>
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label fw-bold">異動備註 / 單號 (選填)</label>
+            <input type="text" name="notes" class="form-control" placeholder="例：領料單號 #PO-20261029" maxlength="50" />
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="submit" class="btn @btnClass px-4" id="btnSubmitStock">
+            <i class="bi bi-check-circle me-1"></i> 確認@(isOut ? "出庫" : "入庫")
+        </button>
+    </div>
+</form>

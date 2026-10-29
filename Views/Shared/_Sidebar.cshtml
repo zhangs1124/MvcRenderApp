@@ -9,19 +9,19 @@
     </div>
 
     <ul class="list-unstyled components">
-        <li class="active">
+        <li>
             <a asp-controller="Home" asp-action="Index">
                 <i class="bi bi-speedometer2 me-2"></i> 系統儀表板
             </a>
         </li>
-        <li>
-            <a href="javascript:void(0);" onclick="Swal.fire({icon: 'info', title: '演練預備', text: '物料庫存管理功能將於步驟三（第一個 Issue ➔ PR 實戰演練）由分支進行開發！'});">
+        <li class="active">
+            <a asp-controller="Inventory" asp-action="Index">
                 <i class="bi bi-boxes me-2"></i> 物料庫存管理
-                <span class="badge bg-warning text-dark ms-auto">PR #1 預備</span>
+                <span class="badge bg-success ms-auto">Active</span>
             </a>
         </li>
         <li>
-            <a href="javascript:void(0);" onclick="Swal.fire({icon: 'info', title: '演練預備', text: '出入庫異動履歷模組將在後續版本迭代中加入。'});">
+            <a href="javascript:void(0);" onclick="Swal.fire({icon: 'info', title: '模組預備', text: '出入庫異動履歷模組將在後續版本迭代中加入。'});">
                 <i class="bi bi-clock-history me-2"></i> 出入庫履歷
             </a>
         </li>
@@ -51,7 +51,7 @@
         </div>
         <div class="system-meta mt-2 pt-2 border-top border-secondary text-white-50 small">
             <div>架構：ASP.NET Core 8.0</div>
-            <div>雙環境版次：v1.0.0-baseline</div>
+            <div>功能分支：feature/issue-1</div>
         </div>
     </div>
 </nav>
